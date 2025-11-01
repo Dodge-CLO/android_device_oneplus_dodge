@@ -15,7 +15,7 @@ DEVICE_PATH := device/oneplus/dodge
 TARGET_OTA_ASSERT_DEVICE := OP5D55L1
 
 # Display
-TARGET_SCREEN_DENSITY := 640
+TARGET_SCREEN_DENSITY := 560
 
 # Properties
 TARGET_ODM_PROP += $(DEVICE_PATH)/properties/odm.prop
