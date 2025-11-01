@@ -5,5 +5,8 @@ bluetooth.device.default_name=OnePlus 13
 debug.hwui.use_hint_manager=true
 debug.sf.enable_adpf_cpu_hint=true
 
+# Device name
+ro.product.marketname=OnePlus 13
+
 # USB
 vendor.usb.product_string=OnePlus 13
