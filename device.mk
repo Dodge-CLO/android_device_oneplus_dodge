@@ -112,6 +112,11 @@ $(call soong_config_set,OPLUS_LINEAGE_VIBRATOR_HAL,INCLUDE_DIR,$(LOCAL_PATH)/vib
 # Inherit from the common OEM chipset makefile.
 $(call inherit-product, device/oneplus/sm8750-common/common.mk)
 
+# Real-time 1080p120 camera configs, declared before dodge-vendor.mk so they win
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/camera/oplus_camera_config:$(TARGET_COPY_OUT_ODM)/etc/camera/config/oplus_camera_config \
+    $(LOCAL_PATH)/camera/camera_unit_feature_config.protobuf:$(TARGET_COPY_OUT_ODM)/etc/camera/config/camera_unit_feature_config.protobuf
+
 # Inherit from the proprietary files makefile.
 $(call inherit-product, vendor/oneplus/dodge/dodge-vendor.mk)
 
