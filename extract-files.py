@@ -10,6 +10,7 @@ from extract_utils.fixups_blob import (
 )
 from extract_utils.fixups_lib import (
     lib_fixups,
+    lib_fixups_user_type,
 )
 from extract_utils.main import (
     ExtractUtils,
@@ -19,11 +20,53 @@ from extract_utils_oplus import (
     add_generated_thermal_engine_config,
 )
 
+def lib_fixup_vendor_suffix(lib: str, partition: str, *args, **kwargs):
+    return f'{lib}_{partition}' if partition == 'vendor' else None
+
+
+lib_fixups: lib_fixups_user_type = {
+    **lib_fixups,
+    (
+        'vendor.qti.ImsRtpService-V1-ndk',
+        'vendor.qti.data.factoryservice-V1-ndk',
+        'vendor.qti.data.mwqemaidlservice-V1-ndk',
+        'vendor.qti.diaghal-V1-ndk',
+        'vendor.qti.hardware.cacertaidlservice-V1-ndk',
+        'vendor.qti.hardware.data.cneaidlservice.internal.api-V1-ndk',
+        'vendor.qti.hardware.data.cneaidlservice.internal.constants-V1-ndk',
+        'vendor.qti.hardware.data.cneaidlservice.internal.server-V1-ndk',
+        'vendor.qti.hardware.data.connectionfactory-V1-ndk',
+        'vendor.qti.hardware.data.dataactivity-V1-ndk',
+        'vendor.qti.hardware.data.dynamicddsaidlservice-V1-ndk',
+        'vendor.qti.hardware.data.flowaidlservice-V1-ndk',
+        'vendor.qti.hardware.data.ka-V1-ndk',
+        'vendor.qti.hardware.data.lceaidlservice-V1-ndk',
+        'vendor.qti.hardware.data.qmiaidlservice-V1-ndk',
+        'vendor.qti.hardware.dpmaidlservice-V1-ndk',
+        'vendor.qti.hardware.embmsslaidl-V2-ndk',
+        'vendor.qti.hardware.fm-V1-ndk',
+        'vendor.qti.hardware.fm@1.0',
+        'vendor.qti.hardware.minkipcbinder-V1-ndk',
+        'vendor.qti.hardware.mwqemadapteraidlservice-V1-ndk',
+        'vendor.qti.hardware.vpp-V1-ndk',
+        'vendor.qti.hardware.wifidisplaysession_aidl-V1-ndk',
+        'vendor.qti.ims.callcapabilityaidlservice-V1-ndk',
+        'vendor.qti.ims.configaidlservice-V1-ndk',
+        'vendor.qti.ims.connectionaidlservice-V1-ndk',
+        'vendor.qti.ims.factoryaidlservice-V1-ndk',
+        'vendor.qti.ims.imscmaidlservice-V1-ndk',
+        'vendor.qti.ims.rcssipaidlservice-V1-ndk',
+        'vendor.qti.ims.rcsuceaidlservice-V1-ndk',
+        'vendor.qti.ims.uceaidlservice-V1-ndk',
+        'vendor.qti.latencyaidlservice-V1-ndk',
+        'vendor.qti.qccsyshal_aidl-V1-ndk',
+        'vendor.qti.qccvndhal_aidl-V1-ndk',
+    ): lib_fixup_vendor_suffix,
+}
+
 namespace_imports = [
     'hardware/oplus',
-    'hardware/qcom-caf/sm8750',
     'vendor/oneplus/sm8750-common',
-    'vendor/qcom/opensource/commonsys-intf/display',
 ]
 
 blob_fixups: blob_fixups_user_type = {
