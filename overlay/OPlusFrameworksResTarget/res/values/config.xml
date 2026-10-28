@@ -97,4 +97,12 @@
          black in software (to avoid aliasing or emulate a cutout that is not physically existent).
          -->
     <bool name="config_fillMainBuiltInDisplayCutout">true</bool>
+
+    <!-- Alert slider -->
+    <string-array name="config_deviceKeyHandlerLibs" translatable="false">
+        <item>/system_ext/app/KeyHandler/KeyHandler.apk</item>
+    </string-array>
+    <string-array name="config_deviceKeyHandlerClasses" translatable="false">
+        <item>org.lineageos.settings.device.KeyHandler</item>
+    </string-array>
 </resources>
