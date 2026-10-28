@@ -1,5 +1,6 @@
 # Bluetooth
 bluetooth.device.default_name=OnePlus 13
+persist.vendor.qcom.bluetooth.aptxadaptiver2_2_support=true
 
 # Laminar
 debug.hwui.use_hint_manager=true
