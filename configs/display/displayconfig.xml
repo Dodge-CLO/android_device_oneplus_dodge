@@ -284,6 +284,28 @@
             <timeMaxSecs>300</timeMaxSecs>
             <timeMinSecs>60</timeMinSecs>
         </timing>
+        <sdrHdrRatioMap>
+            <point>
+                <sdrNits>2.000</sdrNits>
+                <hdrRatio>8.000</hdrRatio>
+            </point>
+            <point>
+                <sdrNits>200.000</sdrNits>
+                <hdrRatio>8.000</hdrRatio>
+            </point>
+            <point>
+                <sdrNits>400.000</sdrNits>
+                <hdrRatio>4.000</hdrRatio>
+            </point>
+            <point>
+                <sdrNits>560.000</sdrNits>
+                <hdrRatio>2.850</hdrRatio>
+            </point>
+            <point>
+                <sdrNits>800.000</sdrNits>
+                <hdrRatio>2.000</hdrRatio>
+            </point>
+        </sdrHdrRatioMap>
     </highBrightnessMode>
     <autoBrightness enabled="true">
         <brighteningLightDebounceMillis>1500</brighteningLightDebounceMillis>
