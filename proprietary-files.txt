@@ -1337,6 +1337,9 @@ vendor/lib64/libvideoml.so
 vendor/lib64/vendor.qti.hardware.camera.aon-service-impl.so
 vendor/lib64/vendor.qti.hardware.camera.offlinecamera-service-impl.so
 
+# Camera - DSCA runtime library
+vendor/lib64/libdscaalgo.so
+
 # Camera - BitML model data
 vendor/lib64/bm5a79v08s13n00.bin
 vendor/lib64/bm5a79v08s13n01.bin
