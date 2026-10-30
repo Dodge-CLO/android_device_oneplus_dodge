@@ -23,6 +23,9 @@ PRODUCT_COPY_FILES += \
 TARGET_SCREEN_HEIGHT := 3168
 TARGET_SCREEN_WIDTH := 1440
 
+# Camera
+TARGET_EXCLUDES_APERTURE := true
+
 # Display
 PRODUCT_PACKAGES += \
     OplusLtpo
@@ -32,6 +35,9 @@ PRODUCT_COPY_FILES += \
 
 # Fingerprint
 TARGET_HAS_UDFPS := true
+
+# Keyboard
+TARGET_USES_PENGUIN_LATINIME := true
 
 # Keymint
 PRODUCT_PACKAGES += \
