@@ -127,6 +127,12 @@
             </intent-filter>
         </provider>
 
+        <!-- O-Reality audio. Not an IA entry: Settings > Sound links here. -->
+        <activity
+            android:name=".oreality.OrealityActivity"
+            android:label="@string/oreality_title"
+            android:exported="true" />
+
         <!-- BypassCharging activity -->
         <activity android:name=".bypasschrg.BypassChargingActivity"
             android:label="@string/bypass_charging_title"
