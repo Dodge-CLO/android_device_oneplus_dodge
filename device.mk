@@ -20,6 +20,9 @@ PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/audio/audio_policy_volumes.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy_volumes.xml \
     $(LOCAL_PATH)/configs/audio/default_volume_tables.xml:$(TARGET_COPY_OUT_VENDOR)/etc/default_volume_tables.xml
 
+PRODUCT_PRODUCT_PROPERTIES += \
+    audio.spatializer.pose_predictor_type=1
+
 # Boot animation
 TARGET_SCREEN_HEIGHT := 3168
 TARGET_SCREEN_WIDTH := 1440
