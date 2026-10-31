@@ -112,6 +112,9 @@ $(call soong_config_set,OPLUS_LINEAGE_VIBRATOR_HAL,INCLUDE_DIR,$(LOCAL_PATH)/vib
 # Inherit from the common OEM chipset makefile.
 $(call inherit-product, device/oneplus/sm8750-common/common.mk)
 
+# Gralloc
+$(call soong_config_set_bool,qtidisplay,camera_yuv_420_888_nv12,true)
+
 # Real-time 1080p120 camera configs, declared before dodge-vendor.mk so they win
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/camera/oplus_camera_config:$(TARGET_COPY_OUT_ODM)/etc/camera/config/oplus_camera_config \
