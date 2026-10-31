@@ -10,3 +10,7 @@ ro.product.marketname=OnePlus 13
 
 # USB
 vendor.usb.product_string=OnePlus 13
+
+# Vibrator
+# LRA period 7692 us (oplus-misc-23821.dtsi) -> ~130 Hz
+ro.vendor.vibrator.lra_freq_hz=130

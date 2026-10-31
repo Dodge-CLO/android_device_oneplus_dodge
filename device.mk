@@ -99,20 +99,13 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.telephony.euicc.xml:$(TARGET_COPY_OUT_PRODUCT)/etc/permissions/android.hardware.telephony.euicc.xml
 
 # Vibrator
+$(call soong_config_set,qti_vibrator,effect_lib,libqtivibratoreffect.oplus.dodge)
+
 PRODUCT_PACKAGES += \
-    vendor.qti.hardware.vibrator.service.oplus
+    libqtivibratoreffect.oplus.dodge
 
-PRODUCT_COPY_FILES += \
-    vendor/qcom/opensource/vibrator/excluded-input-devices.xml:$(TARGET_COPY_OUT_VENDOR)/etc/excluded-input-devices.xml
-
-PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/configs/vibrator/def/effect_0.bin:$(TARGET_COPY_OUT_ODM)/etc/vibrator/9999/def/effect_0.bin\
-    $(LOCAL_PATH)/configs/vibrator/def/effect_1.bin:$(TARGET_COPY_OUT_ODM)/etc/vibrator/9999/def/effect_1.bin\
-    $(LOCAL_PATH)/configs/vibrator/def/effect_2.bin:$(TARGET_COPY_OUT_ODM)/etc/vibrator/9999/def/effect_2.bin\
-    $(LOCAL_PATH)/configs/vibrator/def/effect_21.bin:$(TARGET_COPY_OUT_ODM)/etc/vibrator/9999/def/effect_21.bin
-
-$(call soong_config_set_bool,OPLUS_LINEAGE_VIBRATOR_HAL,USE_EFFECT_STREAM,true)
-$(call soong_config_set,OPLUS_LINEAGE_VIBRATOR_HAL,INCLUDE_DIR,$(LOCAL_PATH)/vibrator/include)
+PRODUCT_PRODUCT_PROPERTIES += \
+    persist.sys.haptic_profile=op13crisp
 
 # Inherit from the common OEM chipset makefile.
 $(call inherit-product, device/oneplus/sm8750-common/common.mk)
