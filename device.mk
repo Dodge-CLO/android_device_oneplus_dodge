@@ -58,6 +58,7 @@ PRODUCT_PACKAGES += \
     FrameworksResTargetEuicc \
     KeyHandlerResTarget \
     OPlusFrameworksResTarget \
+    OPlusGameSpaceResTarget \
     OPlusSettingsProviderResTarget \
     OPlusSettingsResTarget \
     OPlusSystemUIResTarget
