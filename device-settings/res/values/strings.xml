@@ -301,4 +301,24 @@
     <string name="on">On</string>
     <string name="off">Off</string>
 
+
+    <!-- O-Reality audio (OPlus AudioX) -->
+    <string name="oreality_title">O-Reality audio</string>
+    <string name="oreality_enable_summary">Enhance the sound of speakers and headphones</string>
+    <string name="oreality_unavailable">The audio effect service is not available</string>
+    <string name="oreality_mode_title">Sound effect</string>
+    <string name="oreality_mode_smart">Smart</string>
+    <string name="oreality_mode_immersive">Immersive</string>
+    <string name="oreality_mode_fidelity">Fidelity</string>
+    <string name="oreality_mode_custom">Custom</string>
+    <string name="oreality_eq_title">Equalizer</string>
+    <string name="oreality_eq_preset_title">Preset</string>
+    <string name="oreality_preset_custom">Custom</string>
+    <string name="oreality_preset_pop">Pop</string>
+    <string name="oreality_preset_rock">Rock</string>
+    <string name="oreality_preset_electronic">Electronic</string>
+    <string name="oreality_preset_classical">Classical</string>
+    <string name="oreality_preset_vocal">Vocal enhancement</string>
+    <string name="oreality_preset_bass">Bass boost</string>
+    <string name="oreality_preset_treble">Treble boost</string>
 </resources>
