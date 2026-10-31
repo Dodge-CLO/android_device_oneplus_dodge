@@ -21,7 +21,11 @@ PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/audio/default_volume_tables.xml:$(TARGET_COPY_OUT_VENDOR)/etc/default_volume_tables.xml
 
 PRODUCT_PRODUCT_PROPERTIES += \
-    audio.spatializer.pose_predictor_type=1
+    audio.spatializer.pose_predictor_type=1 \
+    ro.audio.spatializer_type=oplus \
+    ro.oplus.audio.dolby_multi_config=true \
+    ro.oplus.audio.effect.speaker_geq=true \
+    ro.oplus.audio.effect.type=audiox_merge
 
 # Boot animation
 TARGET_SCREEN_HEIGHT := 3168
