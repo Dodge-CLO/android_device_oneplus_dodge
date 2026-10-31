@@ -6,4 +6,9 @@
 <resources>
     <!-- Maintainer -->
     <string name="penguin_maintainer" translatable="false">Saikiran</string>
+
+    <!-- Device specifications (About phone, Model and hardware) -->
+    <string name="config_device_soc_name" translatable="false">Qualcomm Snapdragon 8 Elite</string>
+    <string name="config_device_display_size" translatable="false">6.82\" LTPO AMOLED</string>
+    <string name="config_device_camera_spec" translatable="false">50 MP main (OIS) + 50 MP 3x periscope telephoto (OIS) + 50 MP ultra-wide, 32 MP front</string>
 </resources>
