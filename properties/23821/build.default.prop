@@ -3,6 +3,9 @@ ro.product.odm.device=OP5D0DL1
 ro.product.odm.model=PJZ110
 ro.product.odm.name=PJZ110
 ro.vendor.oplus.regionmark=CN
+ro.product.device_for_attestation=OP5D0DL1
+ro.product.model_for_attestation=PJZ110
+ro.product.name_for_attestation=PJZ110
 
 # NFC
 persist.vendor.nfc.config_file_name=libnfc-mtp-SN220.conf_23821
