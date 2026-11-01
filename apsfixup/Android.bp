@@ -1,0 +1,19 @@
+/*
+ * Copyright (C) 2026 The PenguinOS Project
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+// Fixes the chroma order of the quick camera bitmap. Installs to /odm/lib64 and is
+// loaded into com.oplus.camera as a DT_NEEDED of libAlgoProcess.so (added by
+// extract-files.py).
+cc_library_shared {
+    name: "libapsfixup",
+    srcs: ["apsfixup.cpp"],
+    shared_libs: ["liblog"],
+    device_specific: true,
+    compile_multilib: "64",
+    cflags: [
+        "-Wall",
+        "-Werror",
+    ],
+}

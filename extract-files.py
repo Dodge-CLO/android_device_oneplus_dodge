@@ -65,6 +65,7 @@ lib_fixups: lib_fixups_user_type = {
 }
 
 namespace_imports = [
+    'device/oneplus/dodge',
     'hardware/oplus',
     'vendor/oneplus/sm8750-common',
 ]
@@ -89,7 +90,8 @@ blob_fixups: blob_fixups_user_type = {
     ): blob_fixup()
         .add_needed('libbase.so'),
     'odm/lib64/libAlgoProcess.so': blob_fixup()
-        .replace_needed('android.hardware.graphics.common-V5-ndk.so', 'android.hardware.graphics.common-V7-ndk.so'),
+        .replace_needed('android.hardware.graphics.common-V5-ndk.so', 'android.hardware.graphics.common-V7-ndk.so')
+        .add_needed('libapsfixup.so'),
     (
         'odm/lib64/libAncHumanSegFigureFusion.so',
         'odm/lib64/libEIS.so',

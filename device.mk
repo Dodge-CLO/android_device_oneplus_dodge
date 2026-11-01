@@ -7,6 +7,10 @@
 PRODUCT_AAPT_CONFIG := normal
 PRODUCT_AAPT_PREF_CONFIG := xxxhdpi
 
+# Camera
+PRODUCT_PACKAGES += \
+    libapsfixup
+
 # Alert slider
 PRODUCT_PACKAGES += \
     KeyHandler \
