@@ -89,6 +89,8 @@ blob_fixups: blob_fixups_user_type = {
         'odm/lib64/soundfx/libOplusSpatializerAidl_DKY.so',
     ): blob_fixup()
         .add_needed('libbase.so'),
+    'product/app/AudioEffectCenter/AudioEffectCenter.apk': blob_fixup()
+        .apktool_patch('blob-patches/AudioEffectCenter.patch'),
     'odm/lib64/libAlgoProcess.so': blob_fixup()
         .replace_needed('android.hardware.graphics.common-V5-ndk.so', 'android.hardware.graphics.common-V7-ndk.so')
         .add_needed('libapsfixup.so'),

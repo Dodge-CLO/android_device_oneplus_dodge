@@ -132,7 +132,7 @@ odm/etc/audio/audiox_param/SPK_VOICE_lvl2.bin|1112cfa6f59d743869ac8a2815cb819a91
 odm/etc/audio/audiox_param/SPK_VOICE_lvl3.bin|b4e92651621a6c5fb94c8e4303ec4ced54f802d1
 odm/etc/audio/audiox_param/SPK_VOICE_lvl4.bin|fa6e21aaddfee088251e12b18c402134d20bbd67
 odm/etc/audio/audiox_param/SPK_VOICE_lvl5.bin|d57125406db3593086c2d1479dbb9686f212734c
-my_product/app/AudioEffectCenter/AudioEffectCenter.apk:product/app/AudioEffectCenter/AudioEffectCenter.apk|c397be525eb746ef8d3efd7be1afdb8d74ef3e31
+my_product/app/AudioEffectCenter/AudioEffectCenter.apk:product/app/AudioEffectCenter/AudioEffectCenter.apk|c397be525eb746ef8d3efd7be1afdb8d74ef3e31|060ac05e1ca249dd91d9f51e1991284a92d2d779
 
 # Camera
 odm/bin/hw/vendor.oplus.hardware.cammidasservice-V1-service
