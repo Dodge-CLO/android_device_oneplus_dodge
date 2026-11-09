@@ -215,9 +215,7 @@ odm/etc/camera/config/dodgemain
 odm/etc/camera/config/dodgetele
 odm/etc/camera/config/dodgetele2
 odm/etc/camera/config/dodgeultrawide
-odm/etc/camera/config/oplus_camera_algo_switch_config
 odm/etc/camera/config/oplus_camera_algo_traversal_config.json
-odm/etc/camera/config/oplus_camera_aps_config
 odm/etc/camera/config/oplus_camera_config
 odm/etc/camera/config/oplus_camera_preview_decision_config.json
 odm/etc/camera/config/oplus_preview_decision_params.json
@@ -1840,3 +1838,7 @@ odm/etc/camera/conf_tuning_params.json
 # Camera BasicTone 2
 # OnePlus 15 CPH2747_17.0.0.102(EX01); retain the Dodge chroma fixup.
 op15/odm/lib64/libBasicTonePhoto.so:odm/lib64/libBasicTonePhoto.so|593b58358c37d1b7716c9158953eba138164c6fd|4caf8f66ac4fbae4ebffaaf07fbafa7a6bf348a9
+
+# Camera pipeline
+odm/etc/camera/config/oplus_camera_aps_config|36d0a0b23e6b2e06f22fa03a05137b143a0a3c5a|a935c839420c4700c8e99d1c4789546fc7b80411
+odm/etc/camera/config/oplus_camera_algo_switch_config|5090c426967ca3add4fe924040ae999691fdb219|906a4d948d869923fbe5ef07f570f4d245b4b6d6

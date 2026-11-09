@@ -9,7 +9,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[3] / 'vendor/oplus/camera/dodge'))
 from op15_tuning import apply_op15_tone
-from op15_pipeline import verify_op15_blob
+from op15_pipeline import apply_op15_pipeline, verify_op15_blob
 
 from extract_utils.fixups_blob import (
     blob_fixup,
@@ -78,6 +78,10 @@ namespace_imports = [
 ]
 
 blob_fixups: blob_fixups_user_type = {
+    (
+        'odm/etc/camera/config/oplus_camera_aps_config',
+        'odm/etc/camera/config/oplus_camera_algo_switch_config',
+    ): blob_fixup().call(apply_op15_pipeline),
     'odm/etc/camera/conf_tuning_params.json': blob_fixup()
         .call(apply_op15_tone),
     (
