@@ -935,6 +935,7 @@ odm/lib64/camera/libafCustomParam_Cam1.bin
 odm/lib64/camera/libafCustomParam_Cam2.bin
 odm/lib64/camera/libafCustomParam_Cam3.bin
 odm/lib64/camera/libpdCustomParam_Cam0.bin
+odm/lib64/camera/libpdCustomParam_Cam1.bin
 odm/lib64/camera/libpdCustomParam_Cam2.bin
 odm/lib64/camera/libpdCustomParam_Cam3.bin
 odm/lib64/camera/revision.txt
