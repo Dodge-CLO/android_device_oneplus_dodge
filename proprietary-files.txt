@@ -950,7 +950,6 @@ odm/lib64/libAncFilter.so
 odm/lib64/libAncHumanSegFigureFusion.so
 odm/lib64/libAncSegBaseSdk.so
 odm/lib64/libAncSegmentSdk.so
-odm/lib64/libBasicTonePhoto.so
 odm/lib64/libBokehPre.so
 odm/lib64/libCS.so
 odm/lib64/libCaptureBokeh.so
@@ -1837,3 +1836,7 @@ odm/vendor/etc/wifi/WCNSS_qcom_cfg.ini
 odm/etc/camera/conf_tuning_params.json
 
 # vi:ft=conf
+
+# Camera BasicTone 2
+# OnePlus 15 CPH2747_17.0.0.102(EX01); retain the Dodge chroma fixup.
+op15/odm/lib64/libBasicTonePhoto.so:odm/lib64/libBasicTonePhoto.so|593b58358c37d1b7716c9158953eba138164c6fd|4caf8f66ac4fbae4ebffaaf07fbafa7a6bf348a9

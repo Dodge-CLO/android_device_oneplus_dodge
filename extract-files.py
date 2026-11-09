@@ -9,6 +9,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[3] / 'vendor/oplus/camera/dodge'))
 from op15_tuning import apply_op15_tone
+from op15_pipeline import verify_op15_blob
 
 from extract_utils.fixups_blob import (
     blob_fixup,
@@ -121,6 +122,7 @@ blob_fixups: blob_fixups_user_type = {
     # embedded GLSL (length-preserving). Normal/Photo mode does NOT use BasicTone, so this only
     # affects the (otherwise crisp) Master/Pro path..
     'odm/lib64/libBasicTonePhoto.so': blob_fixup()
+        .call(verify_op15_blob)
         .binary_regex_replace(
             b'vec4\\(dstYuv\\.r, dstYuv\\.b, dstYuv\\.g, 1\\.0\\)',
             b'vec4(dstYuv.r, dstYuv.g, dstYuv.b, 1.0)',
