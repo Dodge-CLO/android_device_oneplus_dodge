@@ -845,7 +845,6 @@ odm/etc/camera/camera_engmode.xml
 odm/etc/camera/capture_bokeh_params.json
 odm/etc/camera/capture_lutportrait_params.json
 odm/etc/camera/capture_neonportrait_params.json
-odm/etc/camera/conf_tuning_params.json
 odm/etc/camera/distortionParams.bin
 odm/etc/camera/eeprom_dodgefront_eeprom.bin
 odm/etc/camera/eeprom_dodgemain_eeprom.bin
@@ -1833,5 +1832,8 @@ odm/etc/wifi/peach/bdwlang.elf
 odm/etc/wifi/peach/regdb.bin
 odm/etc/wifi/peach/regdb_version
 odm/vendor/etc/wifi/WCNSS_qcom_cfg.ini
+
+# Camera tone
+odm/etc/camera/conf_tuning_params.json
 
 # vi:ft=conf

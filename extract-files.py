@@ -4,6 +4,12 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
+import sys
+from pathlib import Path
+
+sys.path.append(str(Path(__file__).resolve().parents[3] / 'vendor/oplus/camera/dodge'))
+from op15_tuning import apply_op15_tone
+
 from extract_utils.fixups_blob import (
     blob_fixup,
     blob_fixups_user_type,
@@ -71,6 +77,8 @@ namespace_imports = [
 ]
 
 blob_fixups: blob_fixups_user_type = {
+    'odm/etc/camera/conf_tuning_params.json': blob_fixup()
+        .call(apply_op15_tone),
     (
         'odm/bin/hw/vendor-oplus-hardware-touch-V2-service',
         'vendor/lib64/libcamxcoreutils.so',
