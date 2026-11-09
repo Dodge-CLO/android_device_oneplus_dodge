@@ -9,7 +9,11 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[3] / 'vendor/oplus/camera/dodge'))
 from op15_tuning import apply_op15_tone
-from op15_pipeline import apply_op15_pipeline, verify_op15_blob
+from op15_pipeline import (
+    apply_op15_pipeline,
+    verify_op15_blob,
+    verify_pipeline_outputs,
+)
 
 from extract_utils.fixups_blob import (
     blob_fixup,
@@ -78,6 +82,7 @@ namespace_imports = [
 ]
 
 blob_fixups: blob_fixups_user_type = {
+    'odm/lib64/libapsultrahdr.so': blob_fixup().call(verify_op15_blob),
     (
         'odm/etc/camera/config/oplus_camera_aps_config',
         'odm/etc/camera/config/oplus_camera_algo_switch_config',
@@ -171,3 +176,6 @@ if __name__ == '__main__':
         module, 'sm8750-common', module.vendor
     )
     utils.run()
+    verify_pipeline_outputs(
+        Path(__file__).resolve().parents[3] / 'vendor/oneplus/dodge/proprietary'
+    )
