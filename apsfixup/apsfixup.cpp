@@ -7,15 +7,17 @@
 //
 // - yuv420sp2rgbaNeon: the quick camera bitmap is a 0x23 buffer with VU chroma
 //   that the converter reads as UV (cyan preview), so hand it a UV copy.
-//   The front portrait frames (debug.apsfixup.yuvswap sizes) are already UV,
-//   or swapped in place below, and are converted as they are.
+//   Portrait frames are already UV and are converted as they are. The APS
+//   mode of the capture is at +0x30 of the buffer_info_t (index into the
+//   algo switch config: 0 common, 1 night, 2 portrait, ...).
 //   debug.apsfixup.rgbuv=0 disables this.
 // - hwJpegEncodec + camApsBufferLockPlanes: the front portrait quick JPEG
 //   (hwJpegEncodec with quick = 1) is encoded from a 3076x4096 frame whose
 //   chroma is in the other order, so the photo first opens with Cb and Cr
-//   swapped. When a quick encode locks a frame of a size in
-//   debug.apsfixup.yuvswap (WxH,WxH; default 3076x4096,4096x3076,962x1280,
-//   1280x962; 0 = off), swap its chroma in place before the encoder reads it.
+//   swapped. When a quick encode in portrait locks a frame of a size in
+//   debug.apsfixup.yuvswap (WxH,WxH; default 3076x4096,4096x3076; 0 = off),
+//   swap its chroma in place before the encoder reads it. Photo mode runs
+//   BasicTone, whose quick frames are already in order.
 // - debug.apsfixup.trace=1 logs the APS converter and encoder calls and the
 //   JPEG copies (read when the camera starts).
 
@@ -31,6 +33,7 @@
 #include <string.h>
 #include <sys/mman.h>
 #include <sys/system_properties.h>
+#include <time.h>
 #include <unistd.h>
 
 #include <atomic>
@@ -39,7 +42,13 @@ namespace {
 
 constexpr const char* kLibrary = "libAlgoProcess.so";
 constexpr int32_t kFormatYuv420Flex = 0x23;
-constexpr const char* kDefaultYuvSwap = "3076x4096,4096x3076,962x1280,1280x962";
+constexpr const char* kDefaultYuvSwap = "3076x4096,4096x3076";
+
+// buffer_info_t: APS capture mode at +0x30.
+constexpr size_t kInfoMode = 0x30;
+constexpr int32_t kModePortrait = 2;
+// How long the mode of a quick bitmap applies to the quick JPEG that follows.
+constexpr int64_t kModeWindowNs = 3'000'000'000;
 
 // ApsBufferPlanes: format +0x0, width +0x4, height +0x8, Y +0x18, UV +0x48,
 // UV row stride +0x54 (0 means the width). Checked against the COS17 blob.
@@ -59,6 +68,19 @@ bool propIsOff(const char* name) {
 bool gTrace = false;
 bool swapListed(int32_t width, int32_t height);
 
+std::atomic<int64_t> gPortraitNs{0};
+
+int64_t nowNs() {
+    timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return static_cast<int64_t>(ts.tv_sec) * 1'000'000'000 + ts.tv_nsec;
+}
+
+bool inPortrait() {
+    const int64_t at = gPortraitNs.load();
+    return at != 0 && nowNs() - at < kModeWindowNs;
+}
+
 // ---- Quick bitmap ----------------------------------------------------------
 
 using Yuv2Rgba = long (*)(void*, void*);
@@ -73,15 +95,19 @@ long wrapYuv2Rgba(void* planes, void* info) {
     auto** uv = reinterpret_cast<uint8_t**>(p + kUvPlane);
     int32_t stride = *reinterpret_cast<int32_t*>(p + kUvStride);
     if (stride == 0) stride = width;
+    const int32_t mode =
+            info != nullptr ? *reinterpret_cast<const int32_t*>(static_cast<uint8_t*>(info) + kInfoMode)
+                            : -1;
+    gPortraitNs.store(mode == kModePortrait ? nowNs() : 0);
     if (format != kFormatYuv420Flex || *uv == nullptr || width <= 0 || height <= 0 ||
         ((width | height) & 1) || stride < width) {
         return gRealYuv2Rgba(planes, info);
     }
-    if (swapListed(width, height)) {
-        if (gTrace) ALOGI("quick bitmap: %dx%d already swapped, kept", width, height);
+    if (mode == kModePortrait && ((width == 962 && height == 1280) || (width == 1280 && height == 962))) {
+        if (gTrace) ALOGI("quick bitmap: portrait %dx%d kept", width, height);
         return gRealYuv2Rgba(planes, info);
     }
-    if (gTrace) ALOGI("quick bitmap: swapping the chroma of a %dx%d frame", width, height);
+    if (gTrace) ALOGI("quick bitmap: mode %d, swapping the chroma of a %dx%d frame", mode, width, height);
 
     const size_t rows = static_cast<size_t>(height) / 2;
     auto* copy = static_cast<uint8_t*>(malloc(static_cast<size_t>(stride) * rows));
@@ -281,7 +307,7 @@ extern "C" __attribute__((visibility("hidden"))) void apsfixup_after(int index,
                   *reinterpret_cast<int32_t*>(planes + kWidth),
                   *reinterpret_cast<int32_t*>(planes + kHeight));
         }
-        swapChroma("quick jpeg", planes);
+        if (inPortrait()) swapChroma("quick jpeg", planes);
         return;
     }
     if (gTrace && t.logged.fetch_add(1) < 60) describe(t, "<", regs);
