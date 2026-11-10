@@ -12,6 +12,10 @@ ro.product.marketname=OnePlus 13
 # ProXDR
 ro.vendor.oplus.hdr.uniform=1
 
+# SurfaceFlinger
+# QDCM StandardSRGB/DefaultSRGB/EnhanceSRGB -> StandardP3/DefaultP3/EnhanceP3
+ro.surface_flinger.wcg_render_intent_map=301:302,303:304,307:308
+
 # Sensors
 # ScreenShotRect of the stock fusionlight profile, in 1440x3168 panel pixels
 vendor.sensors.als_correction.grabrect=1010 148 1048 190

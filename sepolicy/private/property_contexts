@@ -1,0 +1,2 @@
+# QDCM sRGB -> P3 render intent pairs for SurfaceFlinger
+ro.surface_flinger.wcg_render_intent_map    u:object_r:surfaceflinger_prop:s0 exact string
