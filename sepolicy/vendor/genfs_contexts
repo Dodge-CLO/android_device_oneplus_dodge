@@ -1,0 +1,5 @@
+# 6.12 places the PCIe root complex outside the soc node
+genfscon sysfs /devices/platform/1c00000.pcie/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/platform/1c00000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/mhi_110e_00.01.00/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/platform/1c00000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/mhi_1107_00.01.00/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/platform/1c00000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/net u:object_r:sysfs_net:s0
