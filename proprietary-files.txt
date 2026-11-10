@@ -1836,8 +1836,8 @@ odm/etc/camera/conf_tuning_params.json
 # vi:ft=conf
 
 # Camera pipeline
-odm/etc/camera/config/oplus_camera_aps_config|36d0a0b23e6b2e06f22fa03a05137b143a0a3c5a|fe788944f984d3ad73840ff504eccd563f879c0a
-odm/etc/camera/config/oplus_camera_algo_switch_config|5090c426967ca3add4fe924040ae999691fdb219|906a4d948d869923fbe5ef07f570f4d245b4b6d6
+odm/etc/camera/config/oplus_camera_aps_config|36d0a0b23e6b2e06f22fa03a05137b143a0a3c5a|71f8f7ba4411e78506ba3c195d44efab269e4891
+odm/etc/camera/config/oplus_camera_algo_switch_config|5090c426967ca3add4fe924040ae999691fdb219|c01ff8161ac818c986ee8440a389bc2555c3e472
 
 # Camera UltraHDR
 # OnePlus 15 CPH2747_17.0.0.102(EX01)
