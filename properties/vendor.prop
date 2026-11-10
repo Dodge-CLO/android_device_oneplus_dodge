@@ -9,6 +9,9 @@ debug.sf.enable_adpf_cpu_hint=true
 # Device name
 ro.product.marketname=OnePlus 13
 
+# ProXDR
+ro.vendor.oplus.hdr.uniform=1
+
 # Sensors
 # ScreenShotRect of the stock fusionlight profile, in 1440x3168 panel pixels
 vendor.sensors.als_correction.grabrect=1010 148 1048 190

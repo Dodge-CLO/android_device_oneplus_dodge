@@ -119,6 +119,14 @@ PRODUCT_PACKAGES += \
 PRODUCT_PRODUCT_PROPERTIES += \
     persist.sys.haptic_profile=op13crisp
 
+# ProXDR
+PRODUCT_PRODUCT_PROPERTIES += \
+    persist.sys.feature.hdr_vision_app=1 \
+    persist.sys.feature.localhdr_version=2 \
+    persist.sys.feature.screen_multi_bits=10 \
+    persist.sys.feature.support.edrlistener=true \
+    persist.sys.feature.uhdr.support=true
+
 # Inherit from the common OEM chipset makefile.
 $(call inherit-product, device/oneplus/sm8750-common/common.mk)
 
