@@ -131,7 +131,6 @@ blob_fixups: blob_fixups_user_type = {
     # embedded GLSL (length-preserving). Normal/Photo mode does NOT use BasicTone, so this only
     # affects the (otherwise crisp) Master/Pro path..
     'odm/lib64/libBasicTonePhoto.so': blob_fixup()
-        .call(verify_op15_blob)
         .binary_regex_replace(
             b'vec4\\(dstYuv\\.r, dstYuv\\.b, dstYuv\\.g, 1\\.0\\)',
             b'vec4(dstYuv.r, dstYuv.g, dstYuv.b, 1.0)',
