@@ -32,6 +32,10 @@ PRODUCT_PRODUCT_PROPERTIES += \
     ro.oplus.audio.effect.speaker_geq=true \
     ro.oplus.audio.effect.type=audiox_merge
 
+# Dolby (controlled from DeviceSettings instead of LunarisDolby)
+TARGET_DOLBY_LUNARIS_APP := false
+$(call inherit-product, vendor/oneplus/dolby/config.mk)
+
 # Boot animation
 TARGET_SCREEN_HEIGHT := 3168
 TARGET_SCREEN_WIDTH := 1440

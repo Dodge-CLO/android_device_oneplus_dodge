@@ -31,6 +31,7 @@ import org.lineageos.device.settings.display.AodBrightnessController;
 import org.lineageos.device.settings.display.DisplayModeController;
 import org.lineageos.device.settings.display.HbmController;
 import org.lineageos.device.settings.display.PwmController;
+import org.lineageos.device.settings.audio.AudioEffects;
 import org.lineageos.device.settings.display.SunlightBoostController;
 import org.lineageos.device.settings.fastcharge.FastChargeController;
 import org.lineageos.device.settings.utils.FileUtils;
@@ -47,6 +48,15 @@ public class DeviceSettingsService extends Service {
 
         // Initialize all subsystems
         initializeSubsystems();
+
+        // Hold the Dolby effect and enforce the chosen sound enhancement (O-Reality or Dolby);
+        // AudioEffectCenter restores its own state when it starts.
+        try {
+            AudioEffects.INSTANCE.apply(this);
+            AudioEffects.INSTANCE.startMonitoring(this);
+        } catch (RuntimeException e) {
+            Log.e(TAG, "Failed to apply audio effects", e);
+        }
 
         // Register receivers for screen and power events
         registerReceivers();

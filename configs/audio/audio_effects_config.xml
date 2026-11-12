@@ -26,6 +26,8 @@ SPDX-License-Identifier: BSD-3-Clause-Clear
         <!-- OPLUS SPATIALIZER END -->
         <!-- O-Reality (OPlus AudioX), global output-mix effect driven by AudioEffectCenter -->
         <library name="oplus_audiox_sw" path="libOplusAudioxAidl.so"/>
+        <!-- Dolby DAP: legacy libswdap.so behind the libswdapaidl adapter -->
+        <library name="dap" path="libswdapaidl.so"/>
     </libraries>
 
     <effects>
@@ -82,6 +84,8 @@ SPDX-License-Identifier: BSD-3-Clause-Clear
         <effect name="spatializer" library="spatializersw" uuid="de4d6aaf-4e9d-473d-8168-4ce92d50a637"/>
         <!-- OPLUS SPATIALIZER END -->
         <effect name="oplusaudiox" library="oplus_audiox_sw" uuid="41f6c0f4-5d8f-11ec-bf63-0242ac130002"/>
+        <effect name="dap" library="dap" uuid="9d4921da-8225-4f29-aefa-39537a04bcaa"
+                type="fa81de0e-588b-11ed-9b6a-0242ac120002"/>
     </effects>
 
     <postprocess>

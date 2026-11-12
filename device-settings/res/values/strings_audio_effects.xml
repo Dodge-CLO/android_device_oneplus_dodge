@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: 2026 The PenguinOS Project
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources>
+    <!-- Audio effects: O-Reality or Dolby Atmos -->
+    <string name="audio_effects_title">Audio effects</string>
+    <string name="audio_effects_summary">Dolby Atmos or O-Reality sound enhancement</string>
+    <string name="audio_effects_mode_title">Sound enhancement</string>
+    <string name="audio_effects_mode_off">Off</string>
+    <string name="audio_effects_mode_oreality">O-Reality</string>
+    <string name="audio_effects_mode_dolby">Dolby Atmos</string>
+
+    <!-- Dolby Atmos -->
+    <string name="dolby_title">Dolby Atmos</string>
+    <string name="dolby_unavailable">The Dolby audio engine is not available</string>
+    <string name="dolby_profile_title">Profile</string>
+    <string name="dolby_profile_dynamic">Dynamic</string>
+    <string name="dolby_profile_video">Movie/Video</string>
+    <string name="dolby_profile_music">Music</string>
+    <string name="dolby_profile_game">Game</string>
+    <string name="dolby_profile_work">Voice</string>
+    <string name="dolby_profile_casual">Casual</string>
+    <string name="dolby_profile_mood">Mood</string>
+    <string name="dolby_ieq_title">Intelligent equalizer</string>
+    <string name="dolby_ieq_off">Off</string>
+    <string name="dolby_ieq_detailed">Detailed</string>
+    <string name="dolby_ieq_balanced">Balanced</string>
+    <string name="dolby_ieq_warm">Warm</string>
+    <string name="dolby_sound_title">Sound</string>
+    <string name="dolby_dialogue_title">Dialogue enhancer</string>
+    <string name="dolby_dialogue_summary">Make speech clearer in movies and videos</string>
+    <string name="dolby_dialogue_amount_title">Dialogue enhancer strength</string>
+    <string name="dolby_bass_title">Bass enhancer</string>
+    <string name="dolby_bass_summary">Deeper, fuller bass</string>
+    <string name="dolby_leveler_title">Volume leveler</string>
+    <string name="dolby_leveler_summary">Keep loudness even between and within tracks</string>
+    <string name="dolby_hp_virtualizer_title">Headphone virtualizer</string>
+    <string name="dolby_hp_virtualizer_summary">Surround sound on headphones</string>
+    <string name="dolby_spk_virtualizer_title">Speaker virtualizer</string>
+    <string name="dolby_spk_virtualizer_summary">Wider sound from the built-in speakers</string>
+    <string name="dolby_widening_title">Stereo widening</string>
+    <string name="dolby_eq_title">Equalizer</string>
+    <string name="dolby_eq_preset_title">Preset</string>
+    <string name="dolby_eq_custom">Custom</string>
+    <string name="dolby_reset_title">Reset profile</string>
+    <string name="dolby_reset_summary">Restore this profile\'s default Dolby settings</string>
+    <string name="dolby_preset_flat">Flat</string>
+    <string name="dolby_preset_rock">Rock</string>
+    <string name="dolby_preset_jazz">Jazz</string>
+    <string name="dolby_preset_pop">Pop</string>
+    <string name="dolby_preset_classical">Classical</string>
+    <string name="dolby_preset_hiphop">Hip-hop</string>
+    <string name="dolby_preset_blues">Blues</string>
+    <string name="dolby_preset_electronic">Electronic</string>
+    <string name="dolby_preset_metal">Metal</string>
+    <string name="dolby_preset_acoustic">Acoustic</string>
+</resources>

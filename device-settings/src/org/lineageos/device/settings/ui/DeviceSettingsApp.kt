@@ -18,7 +18,7 @@ import androidx.navigation.compose.rememberNavController
 import org.lineageos.device.settings.R
 import org.lineageos.device.settings.ui.screens.BypassChargingScreen
 import org.lineageos.device.settings.ui.screens.MainScreen
-import org.lineageos.device.settings.ui.screens.OrealityScreen
+import org.lineageos.device.settings.ui.screens.AudioEffectsScreen
 
 enum class DeviceSettingsDest(val route: String) {
     Main("main"),
@@ -39,7 +39,7 @@ fun DeviceSettingsApp(
     }
     DeviceSettingsScaffold(
         title = if (route == DeviceSettingsDest.Oreality.route) {
-            stringResource(R.string.oreality_title)
+            stringResource(R.string.audio_effects_title)
         } else null,
         onBack = {
             if (!navController.popBackStack()) onFinish()
@@ -60,7 +60,7 @@ fun DeviceSettingsApp(
                 BypassChargingScreen(contentPadding = padding)
             }
             composable(DeviceSettingsDest.Oreality.route) {
-                OrealityScreen(contentPadding = padding)
+                AudioEffectsScreen(contentPadding = padding)
             }
         }
     }
