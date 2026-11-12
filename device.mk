@@ -26,6 +26,7 @@ PRODUCT_COPY_FILES += \
 
 PRODUCT_PRODUCT_PROPERTIES += \
     audio.spatializer.pose_predictor_type=1 \
+    ro.audio.spatializer_channel_count_param=0x100100ba \
     ro.audio.spatializer_type=oplus \
     ro.oplus.audio.dolby_multi_config=true \
     ro.oplus.audio.effect.speaker_geq=true \
