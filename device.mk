@@ -22,7 +22,8 @@ PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/audio/audio_effects_config.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/sku_sun/audio_effects_config.xml \
     $(LOCAL_PATH)/configs/audio/audio_module_config_primary.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/audio_module_config_primary.xml \
     $(LOCAL_PATH)/configs/audio/audio_policy_volumes.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy_volumes.xml \
-    $(LOCAL_PATH)/configs/audio/default_volume_tables.xml:$(TARGET_COPY_OUT_VENDOR)/etc/default_volume_tables.xml
+    $(LOCAL_PATH)/configs/audio/default_volume_tables.xml:$(TARGET_COPY_OUT_VENDOR)/etc/default_volume_tables.xml \
+    $(LOCAL_PATH)/configs/media/media_codecs_c2_audio.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_c2_audio.xml
 
 PRODUCT_PRODUCT_PROPERTIES += \
     audio.spatializer.pose_predictor_type=1 \
@@ -34,6 +35,7 @@ PRODUCT_PRODUCT_PROPERTIES += \
 
 # Dolby (controlled from DeviceSettings instead of LunarisDolby)
 TARGET_DOLBY_LUNARIS_APP := false
+TARGET_DOLBY_CODEC2_AIDL := true
 $(call inherit-product, vendor/oneplus/dolby/config.mk)
 
 # Boot animation
