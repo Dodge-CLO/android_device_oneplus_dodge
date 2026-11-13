@@ -17,6 +17,10 @@ PRODUCT_PACKAGES += \
     DeviceSettings \
     tri-state-key-calibrate
 
+# AirPods
+PRODUCT_PACKAGES += \
+    PenguinPods
+
 # Audio
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/audio/audio_effects_config.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/sku_sun/audio_effects_config.xml \
