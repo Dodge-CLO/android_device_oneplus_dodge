@@ -34,6 +34,10 @@ PRODUCT_PRODUCT_PROPERTIES += \
     ro.oplus.audio.effect.type=audiox_merge
 
 # Dolby (controlled from DeviceSettings instead of LunarisDolby)
+# Speaker profiles trimmed to stock OnePlus levels; listed first so it wins over the shared file
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/configs/dolby/dax-default.xml:$(TARGET_COPY_OUT_VENDOR)/etc/dolby/dax-default.xml
+
 TARGET_DOLBY_LUNARIS_APP := false
 TARGET_DOLBY_CODEC2_AIDL := true
 $(call inherit-product, vendor/oneplus/dolby/config.mk)
