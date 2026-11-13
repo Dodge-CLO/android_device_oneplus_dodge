@@ -14,7 +14,6 @@ featenabler.img;AB
 hyp.img;AB
 imagefv.img;AB
 keymaster.img;AB
-modem.img;AB
 oplus_sec.img;AB
 pdp.img;AB
 pdp_cdb.img;AB
@@ -31,3 +30,8 @@ uefisecapp.img;AB
 xbl.img;AB
 xbl_config.img;AB
 xbl_ramdump.img;AB
+
+# Modem (holds the ADSP firmware) - pinned to OOS16 CPH2649_11.F.94
+# The COS17 ADSP build crashes (audio_process GC_E0000114) when the DSP hotword
+# is armed, rebooting the phone during Maps navigation or with Hey Google on
+modem.img;AB|f4efeba941e31c5661cb4d09db45784faa5d1ea4
