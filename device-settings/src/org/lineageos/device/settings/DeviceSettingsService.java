@@ -28,6 +28,7 @@ import androidx.preference.PreferenceManager;
 import org.lineageos.device.settings.bypasschrg.BypassChargingController;
 import org.lineageos.device.settings.bypasschrg.BypassChargingManager;
 import org.lineageos.device.settings.display.AodBrightnessController;
+import org.lineageos.device.settings.slider.SliderPopup;
 import org.lineageos.device.settings.display.DisplayModeController;
 import org.lineageos.device.settings.display.HbmController;
 import org.lineageos.device.settings.display.PwmController;
@@ -40,6 +41,8 @@ public class DeviceSettingsService extends Service {
     private static final String TAG = "DeviceSettingsService";
 
     private BroadcastReceiver mReceiver;
+    private BroadcastReceiver mSliderReceiver;
+    private SliderPopup mSliderPopup;
 
     @Override
     public void onCreate() {
@@ -220,6 +223,23 @@ public class DeviceSettingsService extends Service {
             Log.e(TAG, "Failed to register receivers", e);
             mReceiver = null;
         }
+
+        // The KeyHandler runs in system_server, so the slider popup is drawn here.
+        mSliderPopup = new SliderPopup(this);
+        mSliderReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                mSliderPopup.show(intent.getIntExtra(Constants.EXTRA_SLIDER_POSITION_VALUE, 0));
+            }
+        };
+        try {
+            registerReceiver(mSliderReceiver,
+                    new IntentFilter(Constants.ACTION_UPDATE_SLIDER_POSITION),
+                    Context.RECEIVER_NOT_EXPORTED);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to register the slider receiver", e);
+            mSliderReceiver = null;
+        }
     }
 
     private void unregisterReceivers() {
@@ -228,6 +248,12 @@ public class DeviceSettingsService extends Service {
                 unregisterReceiver(mReceiver);
             } catch (Exception ignored) {}
             mReceiver = null;
+        }
+        if (mSliderReceiver != null) {
+            try {
+                unregisterReceiver(mSliderReceiver);
+            } catch (Exception ignored) {}
+            mSliderReceiver = null;
         }
     }
 
