@@ -10,8 +10,7 @@
 //   Portrait frames are already UV and are converted as they are. The APS
 //   mode of the capture is at +0x30 of the buffer_info_t (index into the
 //   algo switch config: 0 common, 1 night, 2 portrait, ...).
-//   debug.apsfixup.rgbuv=0 disables this; debug.apsfixup.rgbkeep lists modes
-//   (comma-separated) whose bitmaps are already UV and are left as they are.
+//   debug.apsfixup.rgbuv=0 disables this.
 // - hwJpegEncodec + camApsBufferLockPlanes: the front portrait quick JPEG
 //   (hwJpegEncodec with quick = 1) is encoded from a 3076x4096 frame whose
 //   chroma is in the other order, so the photo first opens with Cb and Cr
@@ -68,7 +67,6 @@ bool propIsOff(const char* name) {
 
 bool gTrace = false;
 bool swapListed(int32_t width, int32_t height);
-bool listed(const char* prop, const char* fallback, const char* want);
 
 std::atomic<int64_t> gPortraitNs{0};
 
@@ -107,12 +105,6 @@ long wrapYuv2Rgba(void* planes, void* info) {
     }
     if (mode == kModePortrait && ((width == 962 && height == 1280) || (width == 1280 && height == 962))) {
         if (gTrace) ALOGI("quick bitmap: portrait %dx%d kept", width, height);
-        return gRealYuv2Rgba(planes, info);
-    }
-    char modeName[16];
-    snprintf(modeName, sizeof(modeName), "%d", mode);
-    if (listed("debug.apsfixup.rgbkeep", "", modeName)) {
-        if (gTrace) ALOGI("quick bitmap: mode %d %dx%d kept", mode, width, height);
         return gRealYuv2Rgba(planes, info);
     }
     if (gTrace) ALOGI("quick bitmap: mode %d, swapping the chroma of a %dx%d frame", mode, width, height);
