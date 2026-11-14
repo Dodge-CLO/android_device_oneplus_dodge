@@ -50,6 +50,7 @@ import org.lineageos.device.settings.ui.arrayOptions
 import org.lineageos.device.settings.ui.defaultPrefs
 import org.lineageos.device.settings.ui.picker.AppPickerDialog
 import org.lineageos.device.settings.ui.picker.HbmWarningDialog
+import org.lineageos.device.settings.ui.picker.PackGridPreference
 import org.lineageos.device.settings.ui.SettingsScroll
 import org.lineageos.device.settings.utils.FileUtils
 
@@ -68,6 +69,16 @@ private fun udfpsPackOptions(context: Context, pkg: String, array: String): List
         } else {
             res.getStringArray(id).mapIndexed { i, name -> i.toString() to udfpsLabel(name) }
         }
+    } catch (e: PackageManager.NameNotFoundException) {
+        emptyList()
+    }
+
+/** Raw string-array [array] of a UDFPS resource pack; empty without the pack. */
+private fun udfpsPackNames(context: Context, pkg: String, array: String): List<String> =
+    try {
+        val res = context.packageManager.getResourcesForApplication(pkg)
+        val id = res.getIdentifier(array, "array", pkg)
+        if (id == 0) emptyList() else res.getStringArray(id).toList()
     } catch (e: PackageManager.NameNotFoundException) {
         emptyList()
     }
@@ -99,6 +110,10 @@ fun MainScreen(
     }
     val udfpsAnimations = remember {
         udfpsPackOptions(context, UDFPS_ANIMATIONS_PKG, "udfps_animation_titles")
+    }
+    val udfpsIconPreviews = remember { udfpsPackNames(context, UDFPS_ICONS_PKG, "udfps_icons") }
+    val udfpsAnimationPreviews = remember {
+        udfpsPackNames(context, UDFPS_ANIMATIONS_PKG, "udfps_animation_previews")
     }
     var udfpsIcon by remember {
         mutableStateOf(systemInt(context, Settings.System.UDFPS_ICON).toString())
@@ -325,9 +340,11 @@ fun MainScreen(
             PreferenceGroup(title = stringResource(R.string.udfps_category_title)) {
                 if (udfpsIcons.isNotEmpty()) {
                     item {
-                        IconListPreference(
+                        PackGridPreference(
                             title = stringResource(R.string.udfps_icon_title),
+                            pkg = UDFPS_ICONS_PKG,
                             options = udfpsIcons,
+                            previews = udfpsIconPreviews,
                             value = udfpsIcon,
                             onValueChange = { value ->
                                 putSystemInt(context, Settings.System.UDFPS_ICON, value.toInt())
@@ -339,9 +356,11 @@ fun MainScreen(
                 }
                 if (udfpsAnimations.isNotEmpty()) {
                     item {
-                        IconListPreference(
+                        PackGridPreference(
                             title = stringResource(R.string.udfps_animation_title),
+                            pkg = UDFPS_ANIMATIONS_PKG,
                             options = udfpsAnimations,
+                            previews = udfpsAnimationPreviews,
                             value = udfpsAnimation,
                             onValueChange = { value ->
                                 putSystemInt(context, Settings.System.UDFPS_ANIM_STYLE, value.toInt())
