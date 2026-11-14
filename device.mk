@@ -59,9 +59,6 @@ PRODUCT_COPY_FILES += \
 
 # Fingerprint
 TARGET_HAS_UDFPS := true
-PRODUCT_PACKAGES += \
-    UdfpsAnimations \
-    UdfpsIcons
 
 # Keyboard
 TARGET_USES_PENGUIN_LATINIME := false

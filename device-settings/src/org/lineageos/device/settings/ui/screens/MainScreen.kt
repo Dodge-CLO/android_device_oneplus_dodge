@@ -16,11 +16,7 @@
  */
 package org.lineageos.device.settings.ui.screens
 
-import android.content.Context
-import android.content.pm.PackageManager
 import android.os.SystemProperties
-import android.os.UserHandle
-import android.provider.Settings
 import android.util.Log
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
@@ -50,53 +46,11 @@ import org.lineageos.device.settings.ui.arrayOptions
 import org.lineageos.device.settings.ui.defaultPrefs
 import org.lineageos.device.settings.ui.picker.AppPickerDialog
 import org.lineageos.device.settings.ui.picker.HbmWarningDialog
-import org.lineageos.device.settings.ui.picker.PackGridPreference
 import org.lineageos.device.settings.ui.SettingsScroll
 import org.lineageos.device.settings.utils.FileUtils
 
 private const val TAG = "DeviceSettings"
 private const val KEY_SHOW_HBM_WARNING = "hbm_warning"
-private const val UDFPS_ICONS_PKG = "com.crdroid.udfps.icons"
-private const val UDFPS_ANIMATIONS_PKG = "com.crdroid.udfps.animations"
-
-/** Index and label of each entry of [array] in a UDFPS resource pack; empty without the pack. */
-private fun udfpsPackOptions(context: Context, pkg: String, array: String): List<Pair<String, String>> =
-    try {
-        val res = context.packageManager.getResourcesForApplication(pkg)
-        val id = res.getIdentifier(array, "array", pkg)
-        if (id == 0) {
-            emptyList()
-        } else {
-            res.getStringArray(id).mapIndexed { i, name -> i.toString() to udfpsLabel(name) }
-        }
-    } catch (e: PackageManager.NameNotFoundException) {
-        emptyList()
-    }
-
-/** Raw string-array [array] of a UDFPS resource pack; empty without the pack. */
-private fun udfpsPackNames(context: Context, pkg: String, array: String): List<String> =
-    try {
-        val res = context.packageManager.getResourcesForApplication(pkg)
-        val id = res.getIdentifier(array, "array", pkg)
-        if (id == 0) emptyList() else res.getStringArray(id).toList()
-    } catch (e: PackageManager.NameNotFoundException) {
-        emptyList()
-    }
-
-/** Turns a drawable name such as "udfps_icon_oneplus_red" into "Oneplus red". */
-private fun udfpsLabel(name: String): String {
-    if (name.contains(' ')) return name
-    val words = name.removePrefix("udfps_icon_").removePrefix("udfps_").removePrefix("fod_")
-        .replace('_', ' ').trim()
-    return words.replaceFirstChar { it.uppercase() }.ifEmpty { name }
-}
-
-private fun systemInt(context: Context, key: String): Int =
-    Settings.System.getIntForUser(context.contentResolver, key, 0, UserHandle.USER_CURRENT)
-
-private fun putSystemInt(context: Context, key: String, value: Int) {
-    Settings.System.putIntForUser(context.contentResolver, key, value, UserHandle.USER_CURRENT)
-}
 
 @Composable
 fun MainScreen(
@@ -105,22 +59,6 @@ fun MainScreen(
 ) {
     val context = LocalContext.current
     val prefs = remember { defaultPrefs(context) }
-    val udfpsIcons = remember {
-        udfpsPackOptions(context, UDFPS_ICONS_PKG, "udfps_icons")
-    }
-    val udfpsAnimations = remember {
-        udfpsPackOptions(context, UDFPS_ANIMATIONS_PKG, "udfps_animation_titles")
-    }
-    val udfpsIconPreviews = remember { udfpsPackNames(context, UDFPS_ICONS_PKG, "udfps_icons") }
-    val udfpsAnimationPreviews = remember {
-        udfpsPackNames(context, UDFPS_ANIMATIONS_PKG, "udfps_animation_previews")
-    }
-    var udfpsIcon by remember {
-        mutableStateOf(systemInt(context, Settings.System.UDFPS_ICON).toString())
-    }
-    var udfpsAnimation by remember {
-        mutableStateOf(systemInt(context, Settings.System.UDFPS_ANIM_STYLE).toString())
-    }
     val display = remember { DisplayModeController.getInstance(context) }
     val hbmController = remember { HbmController.getInstance(context) }
     val pwmController = remember { PwmController.getInstance(context) }
@@ -332,43 +270,6 @@ fun MainScreen(
                         customIcon = { PrefIcon(R.drawable.ic_down_icon) },
                         onClick = { pickingSliderApp = Constants.KEY_NOTIF_SLIDER_APP_BOTTOM },
                     )
-                }
-            }
-        }
-
-        if (udfpsIcons.isNotEmpty() || udfpsAnimations.isNotEmpty()) {
-            PreferenceGroup(title = stringResource(R.string.udfps_category_title)) {
-                if (udfpsIcons.isNotEmpty()) {
-                    item {
-                        PackGridPreference(
-                            title = stringResource(R.string.udfps_icon_title),
-                            pkg = UDFPS_ICONS_PKG,
-                            options = udfpsIcons,
-                            previews = udfpsIconPreviews,
-                            value = udfpsIcon,
-                            onValueChange = { value ->
-                                putSystemInt(context, Settings.System.UDFPS_ICON, value.toInt())
-                                udfpsIcon = value
-                            },
-                            icon = R.drawable.ic_udfps,
-                        )
-                    }
-                }
-                if (udfpsAnimations.isNotEmpty()) {
-                    item {
-                        PackGridPreference(
-                            title = stringResource(R.string.udfps_animation_title),
-                            pkg = UDFPS_ANIMATIONS_PKG,
-                            options = udfpsAnimations,
-                            previews = udfpsAnimationPreviews,
-                            value = udfpsAnimation,
-                            onValueChange = { value ->
-                                putSystemInt(context, Settings.System.UDFPS_ANIM_STYLE, value.toInt())
-                                udfpsAnimation = value
-                            },
-                            icon = R.drawable.ic_udfps,
-                        )
-                    }
                 }
             }
         }
