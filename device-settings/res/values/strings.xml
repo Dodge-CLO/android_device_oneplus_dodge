@@ -321,4 +321,9 @@
     <string name="oreality_preset_vocal">Vocal enhancement</string>
     <string name="oreality_preset_bass">Bass boost</string>
     <string name="oreality_preset_treble">Treble boost</string>
+
+    <!-- Under-display fingerprint icon and animation -->
+    <string name="udfps_category_title">Fingerprint</string>
+    <string name="udfps_icon_title">Fingerprint icon</string>
+    <string name="udfps_animation_title">Fingerprint animation</string>
 </resources>
