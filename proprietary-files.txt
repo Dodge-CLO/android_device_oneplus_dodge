@@ -1592,6 +1592,10 @@ odm/etc/init/dvs-aidl-service.rc
 odm/etc/vintf/manifest/dvs-aidl-service.xml
 odm/etc/media_codecs_dolby_vision.xml:vendor/etc/media_codecs_dolby_vision.xml
 odm/lib64/vendor.dolby.dvs-V1-ndk.so
+my_product/lib64/libdolbyeffect_5.0.so:system_ext/lib64/libdolbyeffect_5.0.so
+my_product/lib64/liboplusdolbyeffect_5.0.so:system_ext/lib64/liboplusdolbyeffect_5.0.so
+system_ext/lib64/libdolbyproxyandroid.so
+system_ext/lib64/libdolbyui.so
 
 # eUICC
 my_product/etc/permissions/EuiccGoogle_grant_permissions_list.xml:product/etc/permissions/privapp-permissions-euiccgoogle.xml

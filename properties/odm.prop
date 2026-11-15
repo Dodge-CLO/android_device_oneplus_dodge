@@ -1,4 +1,6 @@
 # Display
+ro.vendor.oplus.dolby_vision_dpu=1
+ro.vendor.oplus.dolby_vision_dpu.dvs=1
 ro.vendor.display.sensortype=2
 vendor.display.enable_dcc=1000000000000
 vendor.display.enable_demura=1
