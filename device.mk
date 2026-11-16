@@ -134,6 +134,13 @@ PRODUCT_PACKAGES += \
 PRODUCT_PRODUCT_PROPERTIES += \
     persist.sys.haptic_profile=op13crisp
 
+# COS cloud AI (Gallery) builds its request headers from these
+PRODUCT_PRODUCT_PROPERTIES += \
+    ro.build.version.oplusrom=V17.0.0
+
+PRODUCT_COPY_FILES += $(foreach f,$(wildcard $(LOCAL_PATH)/properties/product/region/*.prop), \
+    $(f):$(TARGET_COPY_OUT_PRODUCT)/etc/region/$(notdir $(f)))
+
 # ProXDR
 PRODUCT_PRODUCT_PROPERTIES += \
     persist.sys.feature.hdr_vision_app=1 \

@@ -1,0 +1,4 @@
+# COS cloud AI (Gallery) builds its request headers from these
+ro.build.version.ota=CPH2649_11.H.05_3050_202610210133
+ro.oplus.pipeline.region=IN
+persist.sys.oplus.region=IN

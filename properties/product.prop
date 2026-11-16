@@ -1,0 +1,2 @@
+# Region-specific product properties (/product, so init may set persist.sys.*)
+import /product/etc/region/build.${ro.boot.hardware.revision}.prop
