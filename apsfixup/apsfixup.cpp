@@ -3,23 +3,30 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// Loaded as a DT_NEEDED of libAlgoProcess.so. Redirects some of its PLT slots:
+// Loaded as a DT_NEEDED of libAlgoProcess.so. Redirects some of its PLT slots,
+// and those of libAlgoInterface.so when libAlgoProcess dlopens it:
 //
+// - openIspDev / closeIspDev: APS runs every algo between them on one thread
+//   with the AlgoProcessData of the capture, whose APSCapMode decides the
+//   fixes below per capture.
 // - yuv420sp2rgbaNeon: the quick camera bitmap is a 0x23 buffer with VU chroma
 //   that the converter reads as UV (cyan preview), so hand it a UV copy.
-//   Portrait frames are already UV and are converted as they are. The APS
-//   mode of the capture is at +0x30 of the buffer_info_t (index into the
-//   algo switch config: 0 common, 1 night, 2 portrait, ...).
-//   debug.apsfixup.rgbuv=0 disables this.
+//   Front portrait bitmaps (962x1280) are already UV and are converted as they
+//   are. debug.apsfixup.rgbuv=0 disables this.
 // - hwJpegEncodec + camApsBufferLockPlanes: the front portrait quick JPEG
 //   (hwJpegEncodec with quick = 1) is encoded from a 3076x4096 frame whose
 //   chroma is in the other order, so the photo first opens with Cb and Cr
-//   swapped. When a quick encode in portrait locks a frame of a size in
+//   swapped. When a portrait quick encode locks a frame of a size in
 //   debug.apsfixup.yuvswap (WxH,WxH; default 3076x4096,4096x3076; 0 = off),
 //   swap its chroma in place before the encoder reads it. Photo mode runs
 //   BasicTone, whose quick frames are already in order.
-// - debug.apsfixup.trace=1 logs the APS converter and encoder calls and the
-//   JPEG copies (read when the camera starts).
+// - camApsBufferLockPlanes of libAlgoInterface: Text mode capture frames and
+//   quick JPEG frames get their chroma swapped once. See "Text mode".
+// - yuv2rgb of libAlgoInterface: the Text mode preview bitmap is converted
+//   from a swapped copy of its 0x23 frame (swapped back after the call).
+// - debug.apsfixup.trace=1 logs the APS converter and encoder calls, the
+//   captures, the capture-size frame locks and the JPEG copies (read when the
+//   camera starts).
 
 #define LOG_TAG "apsfixup"
 
@@ -37,18 +44,30 @@
 #include <unistd.h>
 
 #include <atomic>
+#include <mutex>
 
 namespace {
 
-constexpr const char* kLibrary = "libAlgoProcess.so";
 constexpr int32_t kFormatYuv420Flex = 0x23;
 constexpr const char* kDefaultYuvSwap = "3076x4096,4096x3076";
 
-// buffer_info_t: APS capture mode at +0x30.
+// buffer_info_t +0x30: what the quick bitmap read as the APS capture mode. It is
+// stale stack for most callers; used only when no capture is known.
 constexpr size_t kInfoMode = 0x30;
+
+// android::AlgoProcessData, the per-capture data APS hands to every algo
+// (checked against the COS17 libAlgoProcess): +0x8 capture key, +0x18
+// APSCapMode. The modes come in back/front pairs: 0/1 common, 2/3 portrait,
+// 4/5 night, 12 super text.
+constexpr size_t kAdpKey = 0x8;
+constexpr size_t kAdpMode = 0x18;
 constexpr int32_t kModePortrait = 2;
-// How long the mode of a quick bitmap applies to the quick JPEG that follows.
-constexpr int64_t kModeWindowNs = 3'000'000'000;
+constexpr int32_t kModePortraitFront = 3;
+constexpr int32_t kModeSuperText = 12;
+
+bool isPortrait(int32_t mode) {
+    return mode == kModePortrait || mode == kModePortraitFront;
+}
 
 // ApsBufferPlanes: format +0x0, width +0x4, height +0x8, Y +0x18, UV +0x48,
 // UV row stride +0x54 (0 means the width). Checked against the COS17 blob.
@@ -68,17 +87,75 @@ bool propIsOff(const char* name) {
 bool gTrace = false;
 bool swapListed(int32_t width, int32_t height);
 
-std::atomic<int64_t> gPortraitNs{0};
+bool safeRead(const void* address, void* out, size_t size);
 
-int64_t nowNs() {
-    timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    return static_cast<int64_t>(ts.tv_sec) * 1'000'000'000 + ts.tv_nsec;
+// ---- Capture mode ----------------------------------------------------------
+// APS runs every algo between AlgoInterface::openIspDev(AlgoProcessData*) and
+// closeIspDev() on the same thread, so the capture an APS call belongs to is
+// the innermost open one on its thread.
+constexpr int kAlgoDepth = 8;
+thread_local void* tAlgo[kAlgoDepth];
+thread_local int tAlgoDepth = 0;
+
+// openIspDev also gets other pointers, so the fields are read fault-safe.
+bool readAdp(const void* adp, int64_t* key, int32_t* mode) {
+    if (adp == nullptr) return false;
+    const auto* p = static_cast<const uint8_t*>(adp);
+    return safeRead(p + kAdpKey, key, sizeof(*key)) && safeRead(p + kAdpMode, mode, sizeof(*mode));
 }
 
-bool inPortrait() {
-    const int64_t at = gPortraitNs.load();
-    return at != 0 && nowNs() - at < kModeWindowNs;
+// The mode of the capture running on this thread, or -1.
+int32_t currentMode(int64_t* key = nullptr) {
+    if (tAlgoDepth <= 0 || tAlgoDepth > kAlgoDepth) return -1;
+    int64_t k = 0;
+    int32_t mode = -1;
+    if (!readAdp(tAlgo[tAlgoDepth - 1], &k, &mode)) return -1;
+    if (key != nullptr) *key = k;
+    return mode;
+}
+
+// ---- Text mode -------------------------------------------------------------
+// Text mode turns the 0x23 capture frame (VU chroma) into RGB and encodes it as
+// the original reading it as UV, so the document and the original come out with
+// Cb and Cr swapped. The first capture-size 0x23 frame libAlgoInterface locks
+// for a super text capture is its source and gets its chroma swapped once, in
+// place; the relocks and the rotated copy (same capture key) are left alone.
+// Its quick JPEG is encoded from 0x11 frames with the same swap; each one is
+// swapped once. debug.apsfixup.text=0 disables this.
+constexpr int64_t kCaptureMinPixels = 3000LL * 4000;
+constexpr int32_t kFormatNv21 = 0x11;
+
+std::mutex gTextLock;
+constexpr int kTextKeys = 16;
+int64_t gTextKeys[kTextKeys];
+int gTextNext = 0;
+
+// True the first time a capture key is seen.
+bool firstForCapture(int64_t key) {
+    std::lock_guard<std::mutex> lock(gTextLock);
+    for (int64_t k : gTextKeys) {
+        if (k == key) return false;
+    }
+    gTextKeys[gTextNext] = key;
+    gTextNext = (gTextNext + 1) % kTextKeys;
+    return true;
+}
+
+// Quick encode on this thread: its mode and the 0x11 frames already swapped.
+thread_local int32_t tQuickMode = -1;
+constexpr int kQuickFrames = 4;
+thread_local uint64_t tQuickSwapped[kQuickFrames];
+thread_local int tQuickSwappedCount = 0;
+
+// The yuv2rgb source swapped on this thread, to swap back after the call.
+thread_local uint8_t* tToRgbSwapped = nullptr;
+
+bool firstForQuickEncode(uint64_t handle) {
+    for (int i = 0; i < tQuickSwappedCount; i++) {
+        if (tQuickSwapped[i] == handle) return false;
+    }
+    if (tQuickSwappedCount < kQuickFrames) tQuickSwapped[tQuickSwappedCount++] = handle;
+    return true;
 }
 
 // ---- Quick bitmap ----------------------------------------------------------
@@ -95,15 +172,15 @@ long wrapYuv2Rgba(void* planes, void* info) {
     auto** uv = reinterpret_cast<uint8_t**>(p + kUvPlane);
     int32_t stride = *reinterpret_cast<int32_t*>(p + kUvStride);
     if (stride == 0) stride = width;
-    const int32_t mode =
-            info != nullptr ? *reinterpret_cast<const int32_t*>(static_cast<uint8_t*>(info) + kInfoMode)
-                            : -1;
-    gPortraitNs.store(mode == kModePortrait ? nowNs() : 0);
+    int32_t mode = currentMode();
+    if (mode < 0 && info != nullptr) {
+        mode = *reinterpret_cast<const int32_t*>(static_cast<uint8_t*>(info) + kInfoMode);
+    }
     if (format != kFormatYuv420Flex || *uv == nullptr || width <= 0 || height <= 0 ||
         ((width | height) & 1) || stride < width) {
         return gRealYuv2Rgba(planes, info);
     }
-    if (mode == kModePortrait && ((width == 962 && height == 1280) || (width == 1280 && height == 962))) {
+    if (isPortrait(mode) && ((width == 962 && height == 1280) || (width == 1280 && height == 962))) {
         if (gTrace) ALOGI("quick bitmap: portrait %dx%d kept", width, height);
         return gRealYuv2Rgba(planes, info);
     }
@@ -152,7 +229,7 @@ bool swapListed(int32_t width, int32_t height) {
 }
 
 // Swaps the chroma bytes of a semi-planar frame of a listed size in place.
-void swapChroma(const char* by, uint8_t* planes) {
+void swapChroma(const char* by, uint8_t* planes, bool anySize) {
     const int32_t format = *reinterpret_cast<int32_t*>(planes + kFormat);
     const int32_t width = *reinterpret_cast<int32_t*>(planes + kWidth);
     const int32_t height = *reinterpret_cast<int32_t*>(planes + kHeight);
@@ -163,7 +240,7 @@ void swapChroma(const char* by, uint8_t* planes) {
     int32_t stride = *reinterpret_cast<int32_t*>(planes + kUvStride);
     if (stride == 0) stride = width;
     if (uv == nullptr || width <= 0 || height <= 0 || ((width | height) & 1) || stride < width ||
-        !swapListed(width, height)) {
+        (!anySize && !swapListed(width, height))) {
         return;
     }
     for (int32_t r = 0; r < height / 2; r++) {
@@ -174,7 +251,7 @@ void swapChroma(const char* by, uint8_t* planes) {
             row[x + 1] = t;
         }
     }
-    ALOGI("%s: swapped the chroma of a 0x%x %dx%d frame", by, format, width, height);
+    if (by[0] != '\0') ALOGI("%s: swapped the chroma of a 0x%x %dx%d frame", by, format, width, height);
 }
 
 // Copies of JPEGs out of APS, for the trace.
@@ -185,8 +262,9 @@ void logJpeg(const uint8_t* p, size_t n) {
         if (marker == 0xD9 || marker == 0xDA) break;
         const size_t length = (static_cast<size_t>(p[i + 2]) << 8) | p[i + 3];
         if (marker == 0xC0 || marker == 0xC1 || marker == 0xC2) {
-            ALOGI("jpeg copy %dx%d, %zu bytes", (p[i + 7] << 8) | p[i + 8],
-                  (p[i + 5] << 8) | p[i + 6], n);
+            const int w = (p[i + 7] << 8) | p[i + 8];
+            const int h = (p[i + 5] << 8) | p[i + 6];
+            ALOGI("jpeg copy %dx%d, %zu bytes", w, h, n);
             return;
         }
         i += 2 + length;
@@ -207,8 +285,11 @@ void* wrapMemcpy(void* dst, const void* src, size_t n) {
 int gProbe[2] = {-1, -1};
 
 // Reads memory that may not be mapped: write() fails with EFAULT instead of
-// faulting. Only used while tracing.
+// faulting.
+std::mutex gProbeLock;
+
 bool safeRead(const void* address, void* out, size_t size) {
+    std::lock_guard<std::mutex> lock(gProbeLock);
     if (gProbe[0] < 0 || write(gProbe[1], address, size) != static_cast<ssize_t>(size)) {
         return false;
     }
@@ -220,8 +301,20 @@ enum Args {
     kJpegIn,       // (APSJpegInImage*, ...), which starts with format, width, height
     kQuickEncode,  // hwJpegEncodec(AlgoProcessData*, void*, int, uchar, int, int quick)
     kLock,         // camApsBufferLockPlanes(handle, ApsBufferPlanes* out, usage, fence, ...)
+    kDlsym,        // dlsym(handle, name)
+    kIspOpen,      // AlgoInterface::openIspDev(this, void* algoProcessData)
+    kIspClose,     // AlgoInterface::closeIspDev(this)
+    kToRgb,        // APSFormatConverter::yuv2rgb(const ApsBufferPlanes& rgb, const ApsBufferPlanes& yuv, bool)
     kOther,
 };
+
+// Library whose PLT slot is redirected.
+enum Lib {
+    kAlgoProcess,    // libAlgoProcess.so, at load
+    kAlgoInterface,  // libAlgoInterface.so, when libAlgoProcess dlopens it
+};
+constexpr const char* kLibNames[] = {"libAlgoProcess.so", "libAlgoInterface.so"};
+constexpr const char* kLibTags[] = {"AP", "AI"};
 
 struct Traced {
     const char* symbol;
@@ -229,6 +322,7 @@ struct Traced {
     Args args;
     void* real;
     std::atomic<int> logged;
+    Lib lib = kAlgoProcess;
 };
 
 Traced gTraced[] = {
@@ -254,11 +348,43 @@ Traced gTraced[] = {
         {"_ZN7android12swJpegEncodeEPvPNS_7APSDataEi13ApsColorSpace", "swJpegEncode", kOther,
          nullptr, {0}},
         {"camApsBufferLockPlanes", "camApsBufferLockPlanes", kLock, nullptr, {0}},
+        {"_ZN7android13AlgoInterface10openIspDevEPv", "openIspDev", kIspOpen, nullptr, {0}},
+        {"_ZN7android13AlgoInterface11closeIspDevEv", "closeIspDev", kIspClose, nullptr, {0}},
+        {"camApsBufferLockPlanes", "AI camApsBufferLockPlanes", kLock, nullptr, {0},
+         kAlgoInterface},
+        {"dlsym", "AI dlsym", kDlsym, nullptr, {0}, kAlgoInterface},
+        {"_ZN18APSFormatConverter5scaleER15ApsBufferPlanesS1_P7APSRECTb", "AI scale", kPlanes,
+         nullptr, {0}, kAlgoInterface},
+        {"_ZN18APSFormatConverter5scaleERK13buffer_info_tS2_P7APSRECT", "AI scaleInfo", kOther,
+         nullptr, {0}, kAlgoInterface},
+        {"_ZN18APSFormatConverter7yuv2rgbERK15ApsBufferPlanesS2_b", "AI yuv2rgb", kToRgb, nullptr,
+         {0}, kAlgoInterface},
 };
 
 // Set while this thread runs a quick hwJpegEncodec.
 thread_local bool tQuickEncode = false;
 constexpr int kTracedCount = sizeof(gTraced) / sizeof(gTraced[0]);
+
+// AlgoProcessData: +0x8 capture key, +0x18 APSCapMode, +0x1c front, +0x38 buffer,
+// +0x8280 sequence id. Trace only.
+void describeAdp(const void* adp, char* out, size_t size) {
+    struct {
+        int64_t key;
+        int64_t pad;
+        int32_t mode;
+        int32_t front;
+    } head{};
+    uint64_t buffer = 0, seq = 0;
+    if (adp == nullptr || !safeRead(static_cast<const uint8_t*>(adp) + 0x8, &head, sizeof(head))) {
+        snprintf(out, size, "adp %p", adp);
+        return;
+    }
+    safeRead(static_cast<const uint8_t*>(adp) + 0x38, &buffer, sizeof(buffer));
+    safeRead(static_cast<const uint8_t*>(adp) + 0x8280, &seq, sizeof(seq));
+    snprintf(out, size, "adp %p mode %d front %d key 0x%llx seq 0x%llx buf 0x%llx", adp, head.mode,
+             head.front, static_cast<unsigned long long>(head.key),
+             static_cast<unsigned long long>(seq), static_cast<unsigned long long>(buffer));
+}
 
 void describePlanes(const void* planes, char* out, size_t size) {
     int32_t head[3];
@@ -274,10 +400,10 @@ void describe(const Traced& t, const char* when, const uint64_t* regs) {
         char a[64], b[64];
         describePlanes(reinterpret_cast<void*>(regs[0]), a, sizeof(a));
         describePlanes(reinterpret_cast<void*>(regs[1]), b, sizeof(b));
-        ALOGI("%s %s(%s, %s, 0x%llx, 0x%llx)", when, t.name, a, b,
+        ALOGI("%s [%d] %s(%s, %s, 0x%llx, 0x%llx)", when, gettid(), t.name, a, b,
               static_cast<unsigned long long>(regs[2]), static_cast<unsigned long long>(regs[3]));
     } else {
-        ALOGI("%s %s(0x%llx, 0x%llx, %lld, %lld, %lld, %lld)", when, t.name,
+        ALOGI("%s [%d] %s(0x%llx, 0x%llx, %lld, %lld, %lld, %lld)", when, gettid(), t.name,
               static_cast<unsigned long long>(regs[0]), static_cast<unsigned long long>(regs[1]),
               static_cast<long long>(regs[2]), static_cast<long long>(regs[3]),
               static_cast<long long>(regs[4]), static_cast<long long>(regs[5]));
@@ -290,7 +416,55 @@ void describe(const Traced& t, const char* when, const uint64_t* regs) {
 extern "C" __attribute__((visibility("hidden"))) void* apsfixup_before(int index,
                                                                        const uint64_t* regs) {
     Traced& t = gTraced[index];
-    if (t.args == kQuickEncode) tQuickEncode = regs[5] == 1;
+    if (t.args == kQuickEncode) {
+        tQuickEncode = regs[5] == 1;
+        // hwJpegEncodec's first argument is the AlgoProcessData of the capture.
+        int64_t key = 0;
+        if (!readAdp(reinterpret_cast<void*>(regs[0]), &key, &tQuickMode)) tQuickMode = -1;
+        tQuickSwappedCount = 0;
+        if (gTrace) {
+            char a[160];
+            describeAdp(reinterpret_cast<void*>(regs[0]), a, sizeof(a));
+            ALOGI("encode [%d] quick %d %s", gettid(), static_cast<int>(regs[5]), a);
+        }
+    }
+    if (t.args == kIspOpen) {
+        if (tAlgoDepth < kAlgoDepth) tAlgo[tAlgoDepth] = reinterpret_cast<void*>(regs[1]);
+        tAlgoDepth++;
+        if (gTrace && t.logged.fetch_add(1) < 400) {
+            char a[160];
+            describeAdp(reinterpret_cast<void*>(regs[1]), a, sizeof(a));
+            ALOGI("isp open [%d] depth %d %s", gettid(), tAlgoDepth, a);
+        }
+        return t.real;
+    }
+    if (t.args == kIspClose) {
+        if (tAlgoDepth > 0) tAlgoDepth--;
+        return t.real;
+    }
+    if (t.args == kToRgb) {
+        // Text mode makes its preview bitmap with yuv2rgb from a 0x23 frame
+        // with the same chroma swap; hand it a swapped frame and swap it back
+        // after. Capture-size frames are fixed at their source already.
+        tToRgbSwapped = nullptr;
+        auto* yuv = reinterpret_cast<uint8_t*>(regs[1]);
+        if (yuv != nullptr && *reinterpret_cast<int32_t*>(yuv + kFormat) == kFormatYuv420Flex &&
+            static_cast<int64_t>(*reinterpret_cast<int32_t*>(yuv + kWidth)) *
+                            *reinterpret_cast<int32_t*>(yuv + kHeight) <
+                    kCaptureMinPixels &&
+            currentMode() == kModeSuperText && !propIsOff("debug.apsfixup.text")) {
+            swapChroma("text bitmap", yuv, true);
+            tToRgbSwapped = yuv;
+        }
+        if (gTrace && t.logged.load() < 60) describe(t, ">", regs);
+        return t.real;
+    }
+    if (gTrace && t.args == kDlsym) {
+        if (t.logged.fetch_add(1) < 200) {
+            ALOGI("> [%d] %s(%s)", gettid(), t.name, reinterpret_cast<const char*>(regs[1]));
+        }
+        return t.real;
+    }
     if (gTrace && t.args != kLock && t.logged.load() < 60) describe(t, ">", regs);
     return t.real;
 }
@@ -299,15 +473,55 @@ extern "C" __attribute__((visibility("hidden"))) void apsfixup_after(int index,
                                                                      const uint64_t* regs) {
     Traced& t = gTraced[index];
     if (t.args == kQuickEncode) tQuickEncode = false;
+    if (t.args == kDlsym) return;
+    if (t.args == kToRgb) {
+        if (tToRgbSwapped != nullptr) swapChroma("", tToRgbSwapped, true);
+        tToRgbSwapped = nullptr;
+        if (gTrace && t.logged.fetch_add(1) < 60) describe(t, "<", regs);
+        return;
+    }
     if (t.args == kLock) {
-        if (!tQuickEncode || regs[1] == 0) return;
+        if (regs[1] == 0) return;
         auto* planes = reinterpret_cast<uint8_t*>(regs[1]);
+        if (gTrace) {
+            const int32_t w = *reinterpret_cast<int32_t*>(planes + kWidth);
+            const int32_t h = *reinterpret_cast<int32_t*>(planes + kHeight);
+            // Frames bigger than the 1920x1440 preview, from any caller.
+            const int32_t f = *reinterpret_cast<int32_t*>(planes + kFormat);
+            if (static_cast<int64_t>(w) * h > 1920 * 1440 && (f == 0x23 || f == 0x11)) {
+                char a[160] = "no algo";
+                if (tAlgoDepth > 0 && tAlgoDepth <= kAlgoDepth) {
+                    describeAdp(tAlgo[tAlgoDepth - 1], a, sizeof(a));
+                }
+                ALOGI("lock %s [%d] h 0x%llx fmt 0x%x %dx%d quick %d depth %d %s", kLibTags[t.lib],
+                      gettid(), static_cast<unsigned long long>(regs[0]), f, w, h,
+                      tQuickEncode ? 1 : 0, tAlgoDepth, a);
+            }
+        }
+        const int32_t format = *reinterpret_cast<int32_t*>(planes + kFormat);
+        if (t.lib == kAlgoInterface) {
+            const int64_t pixels =
+                    static_cast<int64_t>(*reinterpret_cast<int32_t*>(planes + kWidth)) *
+                    *reinterpret_cast<int32_t*>(planes + kHeight);
+            int64_t key = 0;
+            if (format == kFormatYuv420Flex && pixels >= kCaptureMinPixels &&
+                currentMode(&key) == kModeSuperText && !propIsOff("debug.apsfixup.text") &&
+                firstForCapture(key)) {
+                swapChroma("text capture", planes, true);
+            }
+            return;
+        }
+        if (!tQuickEncode) return;
+        if (tQuickMode == kModeSuperText && format == kFormatNv21 &&
+            !propIsOff("debug.apsfixup.text") && firstForQuickEncode(regs[0])) {
+            swapChroma("text quick jpeg", planes, true);
+        }
         if (gTrace) {
             ALOGI("quick encode locked fmt 0x%x %dx%d", *reinterpret_cast<int32_t*>(planes + kFormat),
                   *reinterpret_cast<int32_t*>(planes + kWidth),
                   *reinterpret_cast<int32_t*>(planes + kHeight));
         }
-        if (inPortrait()) swapChroma("quick jpeg", planes);
+        if (isPortrait(tQuickMode)) swapChroma("quick jpeg", planes, false);
         return;
     }
     if (gTrace && t.logged.fetch_add(1) < 60) describe(t, "<", regs);
@@ -372,19 +586,29 @@ WRAP_TRAMPOLINE(7);
 WRAP_TRAMPOLINE(8);
 WRAP_TRAMPOLINE(9);
 WRAP_TRAMPOLINE(10);
+WRAP_TRAMPOLINE(11);
+WRAP_TRAMPOLINE(12);
+WRAP_TRAMPOLINE(13);
+WRAP_TRAMPOLINE(14);
+WRAP_TRAMPOLINE(15);
+WRAP_TRAMPOLINE(16);
+WRAP_TRAMPOLINE(17);
 
 namespace {
 
 void (*const kTrampolines[])() = {
         apsfixup_tramp_0, apsfixup_tramp_1, apsfixup_tramp_2, apsfixup_tramp_3,
         apsfixup_tramp_4, apsfixup_tramp_5, apsfixup_tramp_6, apsfixup_tramp_7,
-        apsfixup_tramp_8, apsfixup_tramp_9, apsfixup_tramp_10,
+        apsfixup_tramp_8, apsfixup_tramp_9, apsfixup_tramp_10, apsfixup_tramp_11,
+        apsfixup_tramp_12, apsfixup_tramp_13, apsfixup_tramp_14, apsfixup_tramp_15,
+        apsfixup_tramp_16, apsfixup_tramp_17,
 };
 static_assert(sizeof(kTrampolines) / sizeof(kTrampolines[0]) == kTracedCount);
 
 // ---- PLT redirection -------------------------------------------------------
 
 struct Target {
+    const char* name = nullptr;
     ElfW(Addr) base = 0;
     const ElfW(Phdr)* phdr = nullptr;
     ElfW(Half) phnum = 0;
@@ -398,8 +622,8 @@ int findLibrary(dl_phdr_info* info, size_t, void* data) {
     const char* name = info->dlpi_name;
     if (name == nullptr) return 0;
     const char* slash = strrchr(name, '/');
-    if (strcmp(slash != nullptr ? slash + 1 : name, kLibrary) != 0) return 0;
     auto* target = static_cast<Target*>(data);
+    if (strcmp(slash != nullptr ? slash + 1 : name, target->name) != 0) return 0;
     target->base = info->dlpi_addr;
     target->phdr = info->dlpi_phdr;
     target->phnum = info->dlpi_phnum;
@@ -458,7 +682,7 @@ bool inRelro(const Target& target, ElfW(Addr) address) {
 void* redirect(const Target& target, const char* symbol, void* replacement) {
     const ElfW(Addr) slot = findSlot(target, symbol);
     if (slot == 0) {
-        ALOGW("%s has no PLT slot for %s", kLibrary, symbol);
+        ALOGW("%s has no PLT slot for %s", target.name, symbol);
         return nullptr;
     }
     auto** entry = reinterpret_cast<void**>(slot);
@@ -474,26 +698,14 @@ void* redirect(const Target& target, const char* symbol, void* replacement) {
     return real;
 }
 
-// The linker relocates libAlgoProcess before running the constructors of its
-// DT_NEEDED libraries, so its GOT already holds the real functions here.
-__attribute__((constructor)) void install() {
-    Target target;
-    if (dl_iterate_phdr(findLibrary, &target) == 0 || !readDynamic(target)) return;
-
-    gRealYuv2Rgba = reinterpret_cast<Yuv2Rgba>(redirect(
-            target,
-            "_ZN18APSFormatConverter17yuv420sp2rgbaNeonERK15ApsBufferPlanesRK13buffer_info_t",
-            reinterpret_cast<void*>(wrapYuv2Rgba)));
-    char trace[PROP_VALUE_MAX] = {};
-    __system_property_get("debug.apsfixup.trace", trace);
-    gTrace = strcmp(trace, "1") == 0 && pipe2(gProbe, O_CLOEXEC) == 0;
-    if (gTrace) {
-        gRealMemcpy = reinterpret_cast<Memcpy>(
-                redirect(target, "memcpy", reinterpret_cast<void*>(wrapMemcpy)));
-    }
+// Redirects the traced slots of one library. Returns how many were wrapped.
+int wrapLibrary(const Target& target, Lib lib) {
     int wrapped = 0;
     for (int i = 0; i < kTracedCount; i++) {
-        const bool fix = gTraced[i].args == kQuickEncode || gTraced[i].args == kLock;
+        if (gTraced[i].lib != lib) continue;
+        const bool fix = gTraced[i].args == kQuickEncode || gTraced[i].args == kLock ||
+                         gTraced[i].args == kIspOpen || gTraced[i].args == kIspClose ||
+                         gTraced[i].args == kToRgb;
         if (!fix && !gTrace) continue;
         // Set the real pointer before the slot can reach the trampoline.
         const ElfW(Addr) slot = findSlot(target, gTraced[i].symbol);
@@ -503,8 +715,56 @@ __attribute__((constructor)) void install() {
             wrapped++;
         }
     }
-    ALOGI("installed (quick bitmap %d, wrapped %d, trace %d)", gRealYuv2Rgba != nullptr, wrapped,
-          gTrace);
+    return wrapped;
+}
+
+// libAlgoProcess dlopens libAlgoInterface (super text, text enhance and other
+// algos) after it is loaded; wrap that one as it comes in.
+using Dlopen = void* (*)(const char*, int);
+Dlopen gRealDlopen = nullptr;
+std::atomic<bool> gInterfaceWrapped{false};
+
+void* wrapDlopen(const char* name, int flags) {
+    void* handle = gRealDlopen(name, flags);
+    if (handle == nullptr || name == nullptr || gInterfaceWrapped.load()) return handle;
+    const char* slash = strrchr(name, '/');
+    if (strcmp(slash != nullptr ? slash + 1 : name, kLibNames[kAlgoInterface]) != 0) {
+        return handle;
+    }
+    if (gInterfaceWrapped.exchange(true)) return handle;
+    Target target;
+    target.name = kLibNames[kAlgoInterface];
+    if (dl_iterate_phdr(findLibrary, &target) != 0 && readDynamic(target)) {
+        ALOGI("%s wrapped %d", target.name, wrapLibrary(target, kAlgoInterface));
+    }
+    return handle;
+}
+
+// The linker relocates libAlgoProcess before running the constructors of its
+// DT_NEEDED libraries, so its GOT already holds the real functions here.
+__attribute__((constructor)) void install() {
+    Target target;
+    target.name = kLibNames[kAlgoProcess];
+    if (dl_iterate_phdr(findLibrary, &target) == 0 || !readDynamic(target)) return;
+
+    gRealYuv2Rgba = reinterpret_cast<Yuv2Rgba>(redirect(
+            target,
+            "_ZN18APSFormatConverter17yuv420sp2rgbaNeonERK15ApsBufferPlanesRK13buffer_info_t",
+            reinterpret_cast<void*>(wrapYuv2Rgba)));
+    char trace[PROP_VALUE_MAX] = {};
+    __system_property_get("debug.apsfixup.trace", trace);
+    // The probe pipe makes the AlgoProcessData reads fault-safe.
+    const bool probe = pipe2(gProbe, O_CLOEXEC) == 0;
+    gTrace = strcmp(trace, "1") == 0 && probe;
+    if (gTrace) {
+        gRealMemcpy = reinterpret_cast<Memcpy>(
+                redirect(target, "memcpy", reinterpret_cast<void*>(wrapMemcpy)));
+    }
+    gRealDlopen = reinterpret_cast<Dlopen>(
+            redirect(target, "dlopen", reinterpret_cast<void*>(wrapDlopen)));
+    const int wrapped = wrapLibrary(target, kAlgoProcess);
+    ALOGI("installed (quick bitmap %d, wrapped %d, dlopen %d, trace %d)",
+          gRealYuv2Rgba != nullptr, wrapped, gRealDlopen != nullptr, gTrace);
 }
 
 }  // namespace
