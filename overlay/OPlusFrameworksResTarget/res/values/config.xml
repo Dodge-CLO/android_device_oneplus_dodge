@@ -52,6 +52,10 @@
          still caps this at the user brightness setting. -->
     <item type="dimen" name="config_screenBrightnessDozeFloat">0.2</item>
 
+    <!-- Fingerprint unlock with the screen off -->
+    <bool name="config_screen_off_udfps_enabled">true</bool>
+    <bool name="config_screen_off_udfps_default_on">true</bool>
+
     <!-- The bounding path of the cutout region of the main built-in display.
          Must either be empty if there is no cutout region, or a string that is parsable by
          {@link android.util.PathParser}.
