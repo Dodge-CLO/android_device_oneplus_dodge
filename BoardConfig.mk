@@ -17,6 +17,11 @@ TARGET_OTA_ASSERT_DEVICE := OP5D55L1
 # Display
 TARGET_SCREEN_DENSITY := 560
 
+# Kernel
+# Rust Binder: rust_binder.ko (system_dlkm) is loaded by first-stage init before
+# binderfs is mounted and takes over from the C driver when this is set.
+BOARD_KERNEL_CMDLINE += binder.impl=rust
+
 # Properties
 TARGET_ODM_PROP += $(DEVICE_PATH)/properties/odm.prop
 TARGET_PRODUCT_PROP += $(DEVICE_PATH)/properties/product.prop
