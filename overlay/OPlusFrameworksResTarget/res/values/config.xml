@@ -56,6 +56,11 @@
     <bool name="config_screen_off_udfps_enabled">true</bool>
     <bool name="config_screen_off_udfps_default_on">true</bool>
 
+    <!-- Screen-off single tap (sensors.oplus, firmware single tap gesture). Off until chosen in
+         the Laboratory, which also picks what the tap does. -->
+    <string name="config_dozeTapSensorType" translatable="false">org.penguin.sensor.single_tap</string>
+    <bool name="config_dozeTapGestureEnabled">false</bool>
+
     <!-- The bounding path of the cutout region of the main built-in display.
          Must either be empty if there is no cutout region, or a string that is parsable by
          {@link android.util.PathParser}.
