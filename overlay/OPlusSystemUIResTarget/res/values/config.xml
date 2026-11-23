@@ -13,6 +13,10 @@
          always-on display) -->
     <string name="doze_brightness_sensor_type" translatable="false">qti.sensor.lux_aod</string>
 
+    <!-- Pulse in the panel's AOD mode, as stock shows notifications on the dark screen: the
+         pulse gets the AOD high/low brightness instead of a dim backlight level. -->
+    <bool name="config_dozePulseInDozeState">true</bool>
+
     <!-- Doze: Table that translates sensor values from the doze_brightness_sensor_type sensor
          to brightness values; -1 means keeping the current brightness. -->
     <integer-array name="config_doze_brightness_sensor_to_brightness">
