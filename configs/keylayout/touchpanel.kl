@@ -1,0 +1,7 @@
+# Touch panel: wake and sleep gestures. The screen-off tap reports scan codes 262-264,
+# which Generic.kl maps to gamepad buttons that take the UI out of touch mode; they are
+# left unmapped here (the tap sensor reads them from the input device directly).
+
+key 142   SLEEP
+key 143   WAKEUP
+key 248   MUTE
