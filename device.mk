@@ -121,7 +121,8 @@ $(call soong_config_set,surfaceflinger,frame_rate_category_min,60)
 $(call soong_config_set,oplus_sensors,fusionlight_frame_sync,true)
 $(call soong_config_set,oplus_sensors,stock_brightness_lux,true)
 PRODUCT_PACKAGES += \
-    OplusBrightnessBridge
+    OplusBrightnessBridge \
+    sensors.oplus
 
 # Soong namespaces
 PRODUCT_SOONG_NAMESPACES += \
