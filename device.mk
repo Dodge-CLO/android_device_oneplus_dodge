@@ -117,6 +117,12 @@ PRODUCT_COPY_FILES += \
 $(call soong_config_set,surfaceflinger,frame_rate_category_high,120)
 $(call soong_config_set,surfaceflinger,frame_rate_category_min,60)
 
+# Sensors
+$(call soong_config_set,oplus_sensors,fusionlight_frame_sync,true)
+$(call soong_config_set,oplus_sensors,stock_brightness_lux,true)
+PRODUCT_PACKAGES += \
+    OplusBrightnessBridge
+
 # Soong namespaces
 PRODUCT_SOONG_NAMESPACES += \
     $(LOCAL_PATH)
