@@ -42,6 +42,9 @@
     <!-- Light sensor event rate in milliseconds for automatic brightness control. -->
     <integer name="config_autoBrightnessLightSensorRate">200</integer>
 
+    <!-- Stock OplusMappingStrategy: no gamma adjustment from the user point. -->
+    <fraction name="config_autoBrightnessAdjustmentMaxGamma">100%</fraction>
+
     <!-- Stock lux_table 31 -->
     <integer-array name="config_autoBrightnessLevels">
         <item>2</item>
